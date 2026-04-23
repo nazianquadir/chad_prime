@@ -115,7 +115,7 @@
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyp7Yw1qGCIWrWLbcyAPVrTgNx10ggV8meJb3zqPhdVM5cqpCSd7hiCxF9flzhZs3E/exec";
 
 const CONFIG = {
-  trialsUrl: "../data/trials2.csv",
+  trialsUrl: "../data/development_trials.csv",
   practiceUrl: "../data/priming_practice.csv",
   fixationMs: 600,
   wordPrimeDisplayMs: 629,
@@ -275,13 +275,13 @@ async function loadAllTrials(){
       fetch(CONFIG.practiceUrl),
     ]);
 
-    if(!mainResp.ok) throw new Error(`Failed to load trials2.csv (${mainResp.status})`);
+    if(!mainResp.ok) throw new Error(`Failed to load development_trials.csv (${mainResp.status})`);
     if(!practiceResp.ok) throw new Error(`Failed to load priming_practice.csv (${practiceResp.status})`);
 
     MAIN_TRIALS = parseMainTrials(await mainResp.text());
     PRACTICE_TRIALS = parsePracticeTrials(await practiceResp.text());
 
-    if(MAIN_TRIALS.length === 0) throw new Error("No valid main trials parsed from trials2.csv");
+    if(MAIN_TRIALS.length === 0) throw new Error("No valid main trials parsed from development_trials.csv");
     if(PRACTICE_TRIALS.length === 0) throw new Error("No valid practice trials parsed from priming_practice.csv");
 
     return true;
