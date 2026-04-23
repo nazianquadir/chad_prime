@@ -194,43 +194,29 @@ function parseMainTrials(csvText){
     const relatedPrime = cells[relIdx] || "";
     const unrelatedPrime = cells[unrelIdx] || "";
 
-    const targetSpecs = [
-      { target: wordTarget, correct: "word", target_label: "word_target" },
-      { target: nonwordTarget, correct: "nonword", target_label: "nonword_target" },
-    ];
-    const primeSpecs = [
-      { prime: relatedPrime, prime_label: "related_prime" },
-      { prime: unrelatedPrime, prime_label: "unrelated_prime" },
-    ];
+    // Collect available targets and primes
+    const availableTargets = [];
+    if(wordTarget) availableTargets.push({ target: wordTarget, correctResponse: "word", target_label: "word_target" });
+    if(nonwordTarget) availableTargets.push({ target: nonwordTarget, correctResponse: "nonword", target_label: "nonword_target" });
 
-    for(const t of targetSpecs){
-      if(!t.target) continue;
-      for(const p of primeSpecs){
-        if(!p.prime) continue;
-        out.push({
-          trial_id: `${baseId}_${t.target_label}_${p.prime_label}`,
-          source_row_id: baseId,
-          prime_type: "word",
-          prime_text: p.prime,
-          target_word: t.target,
-          correct_response: t.correct,
-          trial_type: p.prime_label,
-          target_label: t.target_label,
-          phase: "main",
-        });
-      }
-    }
+    const availablePrimes = [];
+    if(relatedPrime) availablePrimes.push({ prime: relatedPrime, prime_label: "related_prime" });
+    if(unrelatedPrime) availablePrimes.push({ prime: unrelatedPrime, prime_label: "unrelated_prime" });
 
-    if(wordTarget){
+    // Create one trial per row by randomly selecting one target and one prime
+    if(availableTargets.length > 0 && availablePrimes.length > 0){
+      const selectedTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
+      const selectedPrime = availablePrimes[Math.floor(Math.random() * availablePrimes.length)];
+
       out.push({
-        trial_id: `${baseId}_word_target_repeated_prime`,
+        trial_id: `${baseId}_${selectedTarget.target_label}_${selectedPrime.prime_label}`,
         source_row_id: baseId,
         prime_type: "word",
-        prime_text: wordTarget,
-        target_word: wordTarget,
-        correct_response: "word",
-        trial_type: "repeated_prime",
-        target_label: "word_target",
+        prime_text: selectedPrime.prime,
+        target: selectedTarget.target,
+        correct_response: selectedTarget.correctResponse,
+        trial_type: selectedPrime.prime_label,
+        target_label: selectedTarget.target_label,
         phase: "main",
       });
     }
@@ -257,7 +243,7 @@ function parsePracticeTrials(csvText){
       trial_id: idIdx !== -1 ? (cells[idIdx] || String(i+1)) : String(i+1),
       prime_type: "word",
       prime_text: cells[primeIdx] || "",
-      target_word: cells[targetIdx] || "",
+      target: cells[targetIdx] || "",
       correct_response: correctResponse,
       trial_type: relationIdx !== -1 ? (cells[relationIdx] || "practice") : "practice",
       target_label: rawTargetType || "practice",
@@ -265,7 +251,7 @@ function parsePracticeTrials(csvText){
     });
   }
 
-  return out.filter(t => t.prime_text && t.target_word);
+  return out.filter(t => t.prime_text && t.target);
 }
 
 async function loadAllTrials(){
@@ -364,7 +350,7 @@ async function runTrialSequence(trial, token){
   await sleep(CONFIG.preTargetGapMs);
   if(token !== State.trialRenderToken) return;
 
-  primeDisplay.textContent = trial.target_word;
+  primeDisplay.textContent = trial.target;
   State.targetOnsetTs = nowMs();
   await sleep(CONFIG.targetReadyDelayMs);
   if(token !== State.trialRenderToken) return;
@@ -390,7 +376,7 @@ async function recordChoice(side){
     source_row_id: trial.source_row_id || "",
     prime_type: "word",
     prime_text: trial.prime_text,
-    target_word: trial.target_word,
+    target_word: trial.target,
     trial_type: trial.trial_type,
     target_label: trial.target_label,
     correct_response: trial.correct_response,
